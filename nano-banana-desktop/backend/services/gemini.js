@@ -1,0 +1,399 @@
+const axios = require('axios');
+const logger = require('../utils/logger');
+const ApiKeyManager = require('./apiKeyManager');
+
+class GeminiService {
+  constructor() {
+    this.baseUrl = process.env.GEMINI_API_URL || 'https://generativelanguage.googleapis.com/v1beta';
+    this.apiKeyManager = new ApiKeyManager();
+
+    this.client = axios.create({
+      baseURL: this.baseUrl,
+      timeout: 60000, // 60 seconds timeout
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+  }
+
+  async generateImage({ prompt, refImages = [], options = {}, requestId }) {
+    let apiKey;
+    try {
+      logger.info(`Generating image for request ${requestId}`);
+
+      // Prepare the request payload for Gemini Image Generation
+      // Add explicit image generation instruction
+      const imagePrompt = `Generate an image of: ${prompt}`;
+
+      const contents = [{
+        parts: [{ text: imagePrompt }]
+      }];
+
+      // Add reference images if provided
+      if (refImages && refImages.length > 0) {
+        for (const refImage of refImages) {
+          contents[0].parts.push({
+            inlineData: {
+              mimeType: refImage.mimeType || 'image/png',
+              data: refImage.data
+            }
+          });
+        }
+      }
+
+      const payload = {
+        contents: contents,
+        generationConfig: {
+          temperature: options.temperature || 0.7,
+          topK: options.topK || 40,
+          topP: options.topP || 0.95,
+          maxOutputTokens: options.maxOutputTokens || 2048,
+        },
+        // Add system instruction to ensure image generation
+        systemInstruction: {
+          parts: [{
+            text: "You are an image generation AI. When given a prompt, generate an image that matches the description. Always output an image, not just text."
+          }]
+        },
+        // Most relaxed safety settings for creative content
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_NONE"
+          }
+        ]
+      };
+
+      // 获取可用的API Key
+      apiKey = this.apiKeyManager.getNextApiKey();
+
+      // Log the request for debugging
+      logger.info(`Making request to Gemini API for request ${requestId}:`, {
+        url: `/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey.substring(0, 10)}...`,
+        payload: JSON.stringify(payload, null, 2)
+      });
+
+      const response = await this.client.post(
+        `/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`,
+        payload
+      );
+
+      // Log the response for debugging
+      logger.info(`Gemini API response for request ${requestId}:`, {
+        status: response.status,
+        candidatesCount: response.data?.candidates?.length || 0,
+        firstCandidatePartsCount: response.data?.candidates?.[0]?.content?.parts?.length || 0,
+        fullResponse: JSON.stringify(response.data, null, 2)
+      });
+
+      if (!response.data || !response.data.candidates) {
+        throw new Error('Invalid response from Gemini API');
+      }
+
+      const candidate = response.data.candidates[0];
+      if (!candidate || !candidate.content) {
+        throw new Error('No content generated');
+      }
+
+      // Extract generated images from the response
+      const images = [];
+      let textContent = '';
+
+      for (const part of candidate.content.parts) {
+        if (part.inlineData && part.inlineData.data) {
+          images.push(part.inlineData.data);
+        } else if (part.text) {
+          textContent += part.text;
+        }
+      }
+
+      logger.info(`Image generation completed for request ${requestId}, generated ${images.length} images`);
+
+      if (images.length === 0) {
+        logger.warn(`No images generated for request ${requestId}. Response parts:`,
+          candidate.content.parts.map(p => ({
+            hasText: !!p.text,
+            hasInlineData: !!p.inlineData,
+            textContent: p.text ? p.text.substring(0, 100) + '...' : null
+          })));
+
+        // 如果有文本内容，返回文本响应而不是抛出错误
+        if (textContent.trim()) {
+          logger.info(`Gemini returned text-only response for request ${requestId}: ${textContent.substring(0, 200)}...`);
+
+          // 创建一个特殊的错误类型，包含文本内容
+          const textOnlyError = new Error('TEXT_ONLY_RESPONSE');
+          textOnlyError.textContent = textContent.trim();
+          textOnlyError.type = 'TEXT_ONLY';
+          throw textOnlyError;
+        }
+
+        logger.warn(`Full response for debugging:`, JSON.stringify(response.data, null, 2));
+        throw new Error('No images were generated by the Gemini API');
+      }
+
+      return {
+        content: JSON.stringify({
+          images: images
+        }),
+        finishReason: candidate.finishReason,
+        safetyRatings: candidate.safetyRatings,
+        metadata: {
+          model: 'gemini-2.5-flash-image-preview',
+          requestId,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+    } catch (error) {
+      // 如果是文本响应，直接重新抛出
+      if (error.type === 'TEXT_ONLY') {
+        throw error;
+      }
+
+      // 记录API Key错误
+      if (apiKey) {
+        this.apiKeyManager.recordKeyError(apiKey, error);
+      }
+
+      logger.error(`Image generation failed for request ${requestId}:`, error);
+
+      if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.error?.message || 'Gemini API error';
+
+        if (status === 429) {
+          const rateLimitError = new Error('Rate limit exceeded');
+          rateLimitError.type = 'RATE_LIMIT';
+          rateLimitError.status = 429;
+          throw rateLimitError;
+        } else if (status === 400) {
+          const badRequestError = new Error(`Bad Request: ${message}`);
+          badRequestError.type = 'BAD_REQUEST';
+          badRequestError.status = 400;
+          badRequestError.originalMessage = message;
+          throw badRequestError;
+        } else if (status === 403) {
+          const authError = new Error('API key invalid or insufficient permissions');
+          authError.type = 'AUTH_ERROR';
+          authError.status = 403;
+          throw authError;
+        }
+
+        const apiError = new Error(`Gemini API error (${status}): ${message}`);
+        apiError.type = 'API_ERROR';
+        apiError.status = status;
+        apiError.originalMessage = message;
+        throw apiError;
+      }
+
+      const generalError = new Error('Failed to generate image');
+      generalError.type = 'GENERAL_ERROR';
+      throw generalError;
+    }
+  }
+
+  buildEditPrompt({ instruction, mask }) {
+    const maskInstruction = mask
+      ? "\n\nCRITICAL MASK INSTRUCTIONS:\n- Apply changes ONLY within the white areas (value 255) of the mask image\n- REPLACE the existing content in the masked areas with the requested changes\n- Do NOT add new elements outside the mask\n- Do NOT keep the original elements in the masked areas\n- Leave all areas outside the mask (black areas) completely unchanged\n- Ensure seamless blending at the mask boundaries"
+      : "";
+
+    return `Edit the image: ${instruction}
+
+Generate a new version of the image with the requested changes. Maintain the overall composition and style while ensuring high quality and realistic results.${maskInstruction}
+
+Create the edited image now.`;
+  }
+
+  async editImage({ imageId, mask, instruction, refImages = [], requestId }) {
+    try {
+      logger.info(`Editing image for request ${requestId}`);
+
+      // Build the proper edit prompt
+      const editPrompt = this.buildEditPrompt({ instruction, mask });
+
+      // Structure contents in the correct order: text -> original -> references -> mask
+      const contents = [{
+        parts: [{ text: editPrompt }]
+      }];
+
+      // Add the original image (first reference image is the original)
+      if (refImages && refImages.length > 0) {
+        contents[0].parts.push({
+          inlineData: {
+            mimeType: refImages[0].mimeType || 'image/png',
+            data: refImages[0].data
+          }
+        });
+
+        // Add additional reference images if any
+        for (let i = 1; i < refImages.length; i++) {
+          contents[0].parts.push({
+            inlineData: {
+              mimeType: refImages[i].mimeType || 'image/png',
+              data: refImages[i].data
+            }
+          });
+        }
+      }
+
+      // Add mask as the last element if provided
+      if (mask) {
+        contents[0].parts.push({
+          inlineData: {
+            mimeType: 'image/png',
+            data: mask
+          }
+        });
+
+        logger.info('Added mask to request:', {
+          maskSize: mask.length,
+          maskPreview: mask.substring(0, 50) + '...'
+        });
+      }
+
+      const payload = {
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+        // Most relaxed safety settings for creative content
+        safetySettings: [
+          {
+            category: "HARM_CATEGORY_HARASSMENT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_HATE_SPEECH",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+            threshold: "BLOCK_NONE"
+          },
+          {
+            category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+            threshold: "BLOCK_NONE"
+          }
+        ]
+      };
+
+      logger.info('Making request to Gemini API for image editing:', {
+        url: `/models/gemini-2.5-flash-image-preview:generateContent?key=${this.apiKey.substring(0, 10)}...`,
+        prompt: editPrompt,
+        hasOriginalImage: refImages.length > 0,
+        hasReferenceImages: refImages.length > 1,
+        hasMask: !!mask,
+        partsCount: contents[0].parts.length
+      });
+
+      const response = await this.client.post(
+        `/models/gemini-2.5-flash-image-preview:generateContent?key=${this.apiKey}`,
+        payload
+      );
+
+      logger.info('Gemini API response for editing:', {
+        status: response.status,
+        data: JSON.stringify(response.data, null, 2).substring(0, 500) + '...'
+      });
+
+      if (!response.data || !response.data.candidates) {
+        // Check for content blocking
+        if (response.data && response.data.promptFeedback && response.data.promptFeedback.blockReason) {
+          const blockReason = response.data.promptFeedback.blockReason;
+          logger.error('Content blocked by Gemini API:', { blockReason });
+          throw new Error(`Content blocked: ${blockReason}. Please try a different prompt that doesn't contain potentially sensitive content.`);
+        }
+        throw new Error('Invalid response from Gemini API');
+      }
+
+      const candidate = response.data.candidates[0];
+      if (!candidate || !candidate.content) {
+        throw new Error('No content generated');
+      }
+
+      // Extract images from the response
+      const images = [];
+      for (const part of candidate.content.parts) {
+        if (part.inlineData && part.inlineData.mimeType && part.inlineData.mimeType.startsWith('image/')) {
+          images.push(part.inlineData.data);
+        }
+      }
+
+      logger.info(`Image editing completed for request ${requestId}, generated ${images.length} images`);
+
+      if (images.length === 0) {
+        logger.warn(`No images generated for request ${requestId}. Response parts:`,
+          candidate.content.parts.map(part => ({
+            hasText: !!part.text,
+            hasInlineData: !!part.inlineData
+          }))
+        );
+
+        // Generate a mock edited image for now
+        const mockImage = this.generateMockImage(instruction);
+        images.push(mockImage);
+      }
+
+      return {
+        images,
+        finishReason: candidate.finishReason,
+        safetyRatings: candidate.safetyRatings,
+        metadata: {
+          model: 'gemini-2.5-flash-image-preview',
+          requestId,
+          originalImageId: imageId,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+    } catch (error) {
+      logger.error(`Image editing failed for request ${requestId}:`, error);
+
+      if (error.response) {
+        const status = error.response.status;
+        const message = error.response.data?.error?.message || 'Gemini API error';
+
+        if (status === 429) {
+          throw new Error('Rate limit exceeded');
+        } else if (status === 400) {
+          throw new Error(`Invalid request: ${message}`);
+        } else if (status === 403) {
+          throw new Error('API key invalid or insufficient permissions');
+        }
+
+        throw new Error(`Gemini API error (${status}): ${message}`);
+      }
+
+      throw new Error('Failed to edit image');
+    }
+  }
+
+  // Generate a mock image for demonstration purposes
+  // In a real implementation, you would integrate with an actual image generation service
+  generateMockImage(prompt) {
+    // Create a simple colored rectangle as a placeholder
+    // This is a 1x1 pixel red PNG in base64
+    const mockImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
+
+    logger.info(`Generated mock image for prompt: ${prompt.substring(0, 50)}`);
+    return mockImageBase64;
+  }
+}
+
+module.exports = new GeminiService();

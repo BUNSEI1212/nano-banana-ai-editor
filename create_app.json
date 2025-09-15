@@ -1,0 +1,110 @@
+{
+  "owner": "admin",
+  "name": "nano-banana-editor",
+  "displayName": "Nano Banana Editor",
+  "logo": "https://cdn.casbin.org/img/casdoor-logo_1185x256.png",
+  "homepageUrl": "http://localhost:5173",
+  "description": "AI Image Generation and Editing Tool",
+  "organization": "built-in",
+  "cert": "cert-built-in",
+  "enablePassword": true,
+  "enableSignUp": true,
+  "enableSignIn": true,
+  "enableCodeSignin": false,
+  "enableSamlCompress": false,
+  "enableWebAuthn": false,
+  "enableLinkWithEmail": false,
+  "enableAutoSignin": false,
+  "enableSigninSession": false,
+  "enableAutoLink": false,
+  "enableSyncAvatar": false,
+  "enableSamlC14nCanonicalizeXml": false,
+  "samlReplyUrl": "",
+  "providers": [
+    {
+      "name": "provider_captcha_default",
+      "canSignUp": false,
+      "canSignIn": false,
+      "canUnlink": false,
+      "prompted": false,
+      "signupGroup": "",
+      "rule": "None"
+    }
+  ],
+  "signinMethods": [
+    {
+      "name": "Password",
+      "displayName": "Password",
+      "rule": "All"
+    },
+    {
+      "name": "Verification code",
+      "displayName": "Verification code", 
+      "rule": "All"
+    }
+  ],
+  "signupItems": [
+    {
+      "name": "ID",
+      "visible": false,
+      "required": true,
+      "prompted": false,
+      "rule": "Random"
+    },
+    {
+      "name": "Username",
+      "visible": true,
+      "required": true,
+      "prompted": false,
+      "rule": "None"
+    },
+    {
+      "name": "Display name",
+      "visible": true,
+      "required": true,
+      "prompted": false,
+      "rule": "None"
+    },
+    {
+      "name": "Password",
+      "visible": true,
+      "required": true,
+      "prompted": false,
+      "rule": "None"
+    },
+    {
+      "name": "Confirm password",
+      "visible": true,
+      "required": true,
+      "prompted": false,
+      "rule": "None"
+    },
+    {
+      "name": "Email",
+      "visible": true,
+      "required": true,
+      "prompted": false,
+      "rule": "Normal"
+    }
+  ],
+  "grantTypes": ["authorization_code"],
+  "tags": [],
+  "redirectUris": ["http://localhost:5173/oauth/callback", "http://localhost:5173"],
+  "tokenFormat": "JWT",
+  "tokenFields": [],
+  "expireInHours": 168,
+  "refreshExpireInHours": 168,
+  "signupUrl": "",
+  "signinUrl": "",
+  "forgetUrl": "",
+  "affiliationUrl": "",
+  "termsOfUse": "",
+  "privacyPolicy": "",
+  "formCss": "",
+  "formCssUrl": "",
+  "formOffset": 2,
+  "formSideHtml": "",
+  "formBackgroundUrl": "",
+  "clientId": "b66c476f0f6bc0795ab1",
+  "clientSecret": "232cebfd975d3b631df9cc75f824c176ca0b90e8"
+}

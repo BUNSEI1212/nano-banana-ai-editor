@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nano Banana AI 图像编辑器 - 激活</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ff6b35 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="50" font-size="40" opacity="0.1">🍌</text></svg>') repeat;
+            background-size: 100px 100px;
+            animation: float 20s infinite linear;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% { transform: translate(-50px, -50px) rotate(0deg); }
+            100% { transform: translate(-50px, -50px) rotate(360deg); }
+        }
+
+        .activation-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            box-shadow: 0 30px 60px rgba(255, 140, 0, 0.3), 0 0 0 1px rgba(255, 215, 0, 0.2);
+            padding: 50px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            margin-bottom: 40px;
+        }
+
+        .logo .icon {
+            font-size: 80px;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: bounce 2s infinite;
+            filter: drop-shadow(0 4px 8px rgba(255, 140, 0, 0.3));
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .logo h1 {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(255, 140, 0, 0.2);
+        }
+
+        .logo p {
+            font-size: 18px;
+            color: #666;
+            margin: 0;
+            font-weight: 500;
+        }
+
+        .activation-form {
+            margin-bottom: 30px;
+        }
+
+        .activation-form h2 {
+            font-size: 24px;
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            font-weight: 700;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .activation-input {
+            width: 100%;
+            padding: 18px 24px;
+            border: 3px solid #ffd700;
+            border-radius: 15px;
+            font-size: 18px;
+            text-align: center;
+            letter-spacing: 3px;
+            font-weight: 700;
+            background: rgba(255, 255, 255, 0.9);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.2);
+        }
+
+        .activation-input:focus {
+            outline: none;
+            border-color: #ff8c00;
+            box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.2), 0 8px 25px rgba(255, 215, 0, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .activate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 50%, #ff6b35 100%);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 140, 0, 0.4);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .activate-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 140, 0, 0.5);
+            background: linear-gradient(135deg, #ffed4e 0%, #ff9500 50%, #ff5722 100%);
+        }
+
+        .activate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .success-message {
+            background: #c6f6d5;
+            color: #2f855a;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            font-size: 14px;
+            color: #888;
+            margin-top: 30px;
+            font-weight: 500;
+        }
+
+        .welcome-text {
+            background: linear-gradient(135deg, #ff8c00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="activation-container">
+        <div class="logo">
+            <div class="icon">🍌</div>
+            <h1>Nano Banana AI 图像编辑器</h1>
+            <p>专业的AI图像生成与编辑工具</p>
+        </div>
+
+        <div class="welcome-text">
+            🎨 欢迎使用 Nano Banana AI 🎨
+        </div>
+
+        <div class="activation-form">
+            <h2>🔑 请输入激活码</h2>
+            
+            <div id="message-container"></div>
+            
+            <div class="input-group">
+                <input 
+                    type="text" 
+                    id="activation-code" 
+                    class="activation-input"
+                    placeholder="NB-XXXX-XXXX-XXXX"
+                    maxlength="17"
+                />
+            </div>
+            
+            <button id="activate-btn" class="activate-btn">
+                激活应用
+            </button>
+        </div>
+
+        <div class="footer">
+            <p>🔑 请输入您的激活码来解锁完整功能 🔑</p>
+        </div>
+    </div>
+
+    <script>
+        const activationInput = document.getElementById('activation-code');
+        const activateBtn = document.getElementById('activate-btn');
+        const messageContainer = document.getElementById('message-container');
+
+        // Format input as user types
+        activationInput.addEventListener('input', (e) => {
+            let value = e.target.value.toUpperCase();
+
+            // Remove any characters that are not valid for activation codes
+            value = value.replace(/[^NB\-A-F0-9]/g, '');
+
+            // Handle pasted complete codes
+            if (value.startsWith('NB-') && value.length <= 17) {
+                e.target.value = value;
+                return;
+            }
+
+            // Extract only the hex characters (remove NB- and dashes)
+            let hexOnly = value.replace(/[^A-F0-9]/g, '');
+
+            // Limit to 12 hex characters (4+4+4)
+            if (hexOnly.length > 12) {
+                hexOnly = hexOnly.substring(0, 12);
+            }
+
+            // Format as NB-XXXX-XXXX-XXXX
+            let formatted = 'NB-';
+            if (hexOnly.length > 0) {
+                formatted += hexOnly.substring(0, 4);
+            }
+            if (hexOnly.length > 4) {
+                formatted += '-' + hexOnly.substring(4, 8);
+            }
+            if (hexOnly.length > 8) {
+                formatted += '-' + hexOnly.substring(8, 12);
+            }
+
+            e.target.value = formatted;
+        });
+
+        // Handle activation
+        activateBtn.addEventListener('click', async () => {
+            const code = activationInput.value.trim();
+            
+            if (!code) {
+                showMessage('请输入激活码', 'error');
+                return;
+            }
+
+            if (!/^NB-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(code)) {
+                showMessage('激活码格式错误，请检查输入', 'error');
+                return;
+            }
+
+            setLoading(true);
+            
+            try {
+                const result = await window.activationAPI.activate(code);
+                
+                if (result.success) {
+                    showMessage(`激活成功！获得 ${result.data.totalCredits} 次生成额度`, 'success');
+                    setTimeout(() => {
+                        // The main process will handle loading the main app
+                    }, 2000);
+                } else {
+                    showMessage(result.error || '激活失败，请检查激活码', 'error');
+                }
+            } catch (error) {
+                showMessage('激活过程中发生错误，请重试', 'error');
+                console.error('Activation error:', error);
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Handle paste events
+        activationInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const cleanText = pastedText.toUpperCase().replace(/[^NB\-A-F0-9]/g, '');
+
+            // If it's a complete activation code, use it directly
+            if (/^NB-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}$/.test(cleanText)) {
+                e.target.value = cleanText;
+            } else {
+                // Otherwise, trigger the input event to format it
+                e.target.value = cleanText;
+                e.target.dispatchEvent(new Event('input'));
+            }
+        });
+
+        // Handle Enter key
+        activationInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                activateBtn.click();
+            }
+        });
+
+        function showMessage(text, type) {
+            const className = type === 'error' ? 'error-message' : 'success-message';
+            messageContainer.innerHTML = `<div class="${className}">${text}</div>`;
+        }
+
+        function setLoading(loading) {
+            if (loading) {
+                activateBtn.innerHTML = '<span class="loading"></span>激活中...';
+                activateBtn.disabled = true;
+            } else {
+                activateBtn.innerHTML = '激活应用';
+                activateBtn.disabled = false;
+            }
+        }
+
+        // Focus input on load
+        window.addEventListener('load', () => {
+            activationInput.focus();
+        });
+    </script>
+</body>
+</html>

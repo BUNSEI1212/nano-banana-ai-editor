@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍌 Nano Banana 激活码生成器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #FDE047;
+        }
+
+        .form-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .plan-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .plan-btn {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .plan-btn:hover {
+            border-color: #FDE047;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .plan-btn.active {
+            border-color: #FDE047;
+            background: #FDE047;
+            color: #333;
+        }
+
+        .plan-btn h4 {
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+
+        .plan-btn p {
+            font-size: 0.9em;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .custom-plan {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            border: 2px dashed #FDE047;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #FDE047;
+        }
+
+        .generate-btn {
+            background: linear-gradient(135deg, #FDE047 0%, #EAB308 100%);
+            color: #333;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(253, 224, 71, 0.3);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .results h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .code-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #FDE047;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .code-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .copy-btn {
+            background: #FDE047;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #EAB308;
+        }
+
+        .export-btn {
+            background: #10B981;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .export-btn:hover {
+            background: #059669;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍌 Nano Banana 激活码生成器</h1>
+            <p>快速生成和管理激活码</p>
+        </div>
+
+        <div class="form-section">
+            <h3>📦 选择套餐类型</h3>
+            <div class="plan-buttons">
+                <div class="plan-btn" data-plan="1">
+                    <h4>🍌 尝鲜套餐</h4>
+                    <p>10次使用</p>
+                    <p>¥13.9</p>
+                </div>
+                <div class="plan-btn" data-plan="2">
+                    <h4>💎 基础套餐</h4>
+                    <p>100次使用</p>
+                    <p>¥69.9</p>
+                </div>
+                <div class="plan-btn" data-plan="3">
+                    <h4>🚀 高阶套餐</h4>
+                    <p>300次使用</p>
+                    <p>¥199.9</p>
+                </div>
+                <div class="plan-btn" data-plan="custom">
+                    <h4>🎨 自定义套餐</h4>
+                    <p>自定义使用额度</p>
+                </div>
+            </div>
+
+            <div class="custom-plan" id="customPlan">
+                <div class="input-group">
+                    <label>🎯 使用次数</label>
+                    <input type="number" id="customCredits" placeholder="输入使用次数，例如：50" min="1" max="999">
+                    <small style="color: #666; font-size: 0.9em; margin-top: 5px; display: block;">
+                        💡 软件只需要知道使用额度，套餐名称和价格由您自由定价
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>🔢 生成数量</h3>
+            <div class="input-group">
+                <label>要生成的激活码数量</label>
+                <input type="number" id="quantity" value="1" min="1" max="1000">
+            </div>
+        </div>
+
+        <button class="generate-btn" id="generateBtn">
+            🎯 生成激活码
+        </button>
+
+        <div class="results" id="results">
+            <h3>✅ 生成结果</h3>
+            <div id="codesList"></div>
+            <button class="export-btn" id="exportBtn">
+                📄 导出为CSV文件
+            </button>
+        </div>
+    </div>
+
+    <script src="activation-code-generator.js"></script>
+</body>
+</html>
