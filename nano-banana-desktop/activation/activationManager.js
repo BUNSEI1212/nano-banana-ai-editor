@@ -155,7 +155,7 @@ class ActivationManager {
         throw new Error('Not in server mode');
       }
 
-      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
       const response = await fetch(`${proxyUrl}/api/activation/status`, {
         method: 'GET',
         headers: {
@@ -247,7 +247,7 @@ class ActivationManager {
       // 2. Get secure nonce from server (optional, fallback to local generation)
       let nonce;
       try {
-        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
         const nonceResponse = await fetch(`${proxyUrl}/api/activation/nonce`);
         if (nonceResponse.ok) {
           const nonceData = await nonceResponse.json();
@@ -269,7 +269,7 @@ class ActivationManager {
       };
 
       // 4. Send verification request to server
-      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
       const response = await fetch(`${proxyUrl}/api/activation/verify`, {
         method: 'POST',
         headers: {
@@ -443,7 +443,7 @@ class ActivationManager {
     try {
       const data = await this.loadActivationData();
 
-      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+      const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
       const response = await fetch(`${proxyUrl}/api/activation/consume`, {
         method: 'POST',
         headers: {

@@ -61,26 +61,26 @@ stop_service() {
 update_backend() {
     print_status "更新后端文件..."
     
-    if [ -d "$TEMP_DIR/nano-banana-desktop/backend" ]; then
+    if [ -d "$TEMP_DIR/gemini-proxy" ]; then
         # 备份当前的.env文件
         if [ -f "$BACKEND_DIR/.env" ]; then
             cp "$BACKEND_DIR/.env" "$BACKEND_DIR/.env.backup"
         fi
-        
+
         # 清空现有后端目录（保留数据和环境文件）
         find "$BACKEND_DIR" -mindepth 1 -maxdepth 1 ! -name 'data' ! -name '.env' ! -name '.env.backup' ! -name 'node_modules' -exec rm -rf {} +
-        
-        # 复制新的后端文件
-        cp -r "$TEMP_DIR/nano-banana-desktop/backend/"* "$BACKEND_DIR/"
-        
+
+        # 复制gemini-proxy文件（包含完整的激活系统）
+        cp -r "$TEMP_DIR/gemini-proxy/"* "$BACKEND_DIR/"
+
         # 恢复.env文件
         if [ -f "$BACKEND_DIR/.env.backup" ]; then
             mv "$BACKEND_DIR/.env.backup" "$BACKEND_DIR/.env"
         fi
-        
-        print_success "后端文件更新完成"
+
+        print_success "Gemini Proxy文件更新完成"
     else
-        print_error "未找到后端源码目录"
+        print_error "未找到gemini-proxy源码目录"
         exit 1
     fi
 }

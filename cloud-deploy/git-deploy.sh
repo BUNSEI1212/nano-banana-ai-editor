@@ -129,15 +129,15 @@ create_directories() {
 copy_backend_files() {
     print_status "复制后端文件..."
     
-    if [ -d "$TEMP_DIR/nano-banana-desktop/backend" ]; then
+    if [ -d "$TEMP_DIR/gemini-proxy" ]; then
         # 清空现有后端目录（保留数据目录）
         find "$BACKEND_DIR" -mindepth 1 -maxdepth 1 ! -name 'data' -exec rm -rf {} +
-        
-        # 复制新的后端文件
-        cp -r "$TEMP_DIR/nano-banana-desktop/backend/"* "$BACKEND_DIR/"
-        print_success "后端文件复制完成"
+
+        # 复制gemini-proxy文件（包含完整的激活系统）
+        cp -r "$TEMP_DIR/gemini-proxy/"* "$BACKEND_DIR/"
+        print_success "Gemini Proxy文件复制完成"
     else
-        print_error "未找到后端源码目录"
+        print_error "未找到gemini-proxy源码目录"
         exit 1
     fi
 }

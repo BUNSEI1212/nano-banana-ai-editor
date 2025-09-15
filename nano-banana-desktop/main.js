@@ -389,8 +389,11 @@ class NanoBananaApp {
           }
         };
 
-        // Make request to proxy service
-        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+        // Make request to proxy service (云服务器 - gemini-proxy)
+        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
+        console.log('Making request to:', `${proxyUrl}/api/generate`);
+        console.log('Request payload:', JSON.stringify(backendRequest, null, 2));
+
         const response = await fetch(`${proxyUrl}/api/generate`, {
           method: 'POST',
           headers: {
@@ -402,7 +405,13 @@ class NanoBananaApp {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Generation failed');
+          console.error('API Error Response:', {
+            status: response.status,
+            statusText: response.statusText,
+            errorData: errorData,
+            url: `${proxyUrl}/api/generate`
+          });
+          throw new Error(errorData.error || `Generation failed (${response.status}: ${response.statusText})`);
         }
 
         const result = await response.json();
@@ -441,8 +450,8 @@ class NanoBananaApp {
           refImages: request.refImages || []
         };
 
-        // Make request to proxy service
-        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://localhost:3002';
+        // Make request to proxy service (云服务器)
+        const proxyUrl = process.env.PROXY_ENDPOINT || 'http://43.142.153.33:3001';
         const response = await fetch(`${proxyUrl}/api/edit`, {
           method: 'POST',
           headers: {

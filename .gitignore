@@ -137,3 +137,6 @@ pnpm-lock.yaml
 **/*apikey*
 **/*secret*
 **/secrets/
+
+# Exclude NanoBananaEditor (separate project)
+NanoBananaEditor/
