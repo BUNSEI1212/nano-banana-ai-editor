@@ -1,0 +1,27 @@
+{
+  "name": "nano-banana-cloud-deploy",
+  "version": "1.0.0",
+  "description": "Nano Banana Backend Cloud Deployment Package",
+  "main": "deploy.sh",
+  "scripts": {
+    "deploy": "chmod +x deploy.sh && ./deploy.sh",
+    "start": "pm2 start ecosystem.config.js --env production",
+    "stop": "pm2 stop nano-banana-backend",
+    "restart": "pm2 restart nano-banana-backend",
+    "logs": "pm2 logs nano-banana-backend",
+    "status": "pm2 status",
+    "monitor": "pm2 monit"
+  },
+  "keywords": [
+    "nano-banana",
+    "deployment",
+    "cloud-server",
+    "pm2",
+    "nodejs"
+  ],
+  "author": "Nano Banana Team",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "pm2": "^5.3.0"
+  }
+}
