@@ -1,0 +1,65 @@
+{
+  "name": "nano-banana-desktop",
+  "version": "2.0.0",
+  "description": "Nano Banana AI Image Editor - Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" \"wait-on http://localhost:3001 && electron .\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:frontend && electron-builder",
+    "build:frontend": "cd frontend && npm run build",
+    "dist": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "electron",
+    "ai",
+    "image-editor",
+    "gemini",
+    "desktop-app"
+  ],
+  "author": "Nano Banana Team",
+  "license": "AGPL-3.0",
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.13.3",
+    "sqlite3": "^5.1.7",
+    "uuid": "^13.0.0",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1"
+  },
+  "build": {
+    "appId": "com.nanobanana.desktop",
+    "productName": "Nano Banana AI Editor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "backend/**/*",
+      "frontend/dist/**/*",
+      "activation/**/*",
+      "node_modules/**/*"
+    ],
+    "nodeGypRebuild": false,
+    "buildDependenciesFromSource": false,
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "assets/icon.png"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "assets/icon.png"
+    }
+  }
+}
